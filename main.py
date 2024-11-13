@@ -25,7 +25,7 @@ def get_container_stats(container):
         'cpu_usage': cpu_percentage,
         'memory_usage': memory_percentage,
     }
-    print(f'@@ container: {container.name} {time.time() - ta}')
+    #print(f'@@ container: {container.name} {time.time() - ta}')
     return result
 
 def get_docker_stats():
@@ -39,7 +39,7 @@ def get_docker_stats():
         for future in as_completed(future_to_container):
             stats.append(future.result())
 
-    print(f'@@ all containers {time.time() - ta}')
+    #print(f'@@ all containers {time.time() - ta}')
     return stats
 
 
