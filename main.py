@@ -3,6 +3,10 @@ import docker
 import time
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import re
+import os
+
+stacks = os.getenv('STACKS', 'default')
 
 app = Flask(__name__)
 latest_metrics = ""
@@ -29,13 +33,26 @@ def get_container_stats(container):
     return result
 
 def get_docker_stats():
+    containers = []
     ta = time.time()
     client = docker.from_env()
-    containers = client.containers.list()
+    cs = client.containers.list()
+    for c in cs:
+        containers.append(c)
+    if stacks == 'all':    
+        regex_containers = containers        
+    elif ',' in stacks:
+        stack_names = [stack.strip() for stack in stacks.split(',')]
+        print('@@@', stack_names)
+        regex_containers = [
+            item for item in containers
+            if any(stack in item.attrs.get('Name', '') for stack in stack_names)
+        ]
+
     stats = []
 
-    with ThreadPoolExecutor(max_workers=min(32, len(containers))) as executor:
-        future_to_container = {executor.submit(get_container_stats, container): container for container in containers}
+    with ThreadPoolExecutor(max_workers=min(32, len(regex_containers))) as executor:
+        future_to_container = {executor.submit(get_container_stats, container): container for container in regex_containers}
         for future in as_completed(future_to_container):
             stats.append(future.result())
 
